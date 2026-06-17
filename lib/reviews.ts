@@ -88,7 +88,9 @@ export async function fetchSourceReviews(sourceUrl: string) {
 
   const fetchedUrl = initialResponse.url || url;
   const reviewUrl = buildAmazonReviewUrl(fetchedUrl);
-  console.debug(`fetchSourceReviews: source=${sourceUrl} resolved=${reviewUrl}`);
+  console.debug(
+    `fetchSourceReviews: source=${sourceUrl} resolved=${reviewUrl}`,
+  );
 
   const response =
     reviewUrl === fetchedUrl
@@ -113,7 +115,7 @@ export async function fetchSourceReviews(sourceUrl: string) {
       const author = root.find(".a-profile-name").first().text().trim() || null;
       const ratingText =
         root.find('i[data-hook="review-star-rating"] span').text().trim() ||
-        root.find('span.a-icon-alt').text().trim() ||
+        root.find("span.a-icon-alt").text().trim() ||
         root.find(".review-rating span").text().trim();
       const ratingMatch = ratingText.match(/([0-5](?:\.[0-9])?)/);
       const rating = ratingMatch ? Number(ratingMatch[1]) : null;
@@ -148,18 +150,20 @@ export async function fetchSourceReviews(sourceUrl: string) {
 
   // If we didn't find reviews, try rendering the page with Puppeteer via an external script
   // This avoids bundler resolution issues (we call the script in a child process).
-  if ((response.url || url).includes('amazon.')) {
+  if ((response.url || url).includes("amazon.")) {
     try {
-      console.debug('fetchSourceReviews: no server-side reviews found, invoking puppeteer scraper script');
-      const { spawnSync } = require('child_process');
-      const path = require('path');
-      const fs = require('fs');
+      console.debug(
+        "fetchSourceReviews: no server-side reviews found, invoking puppeteer scraper script",
+      );
+      const { spawnSync } = require("child_process");
+      const path = require("path");
+      const fs = require("fs");
       // locate the scraper script by walking up directories from __dirname and process.cwd()
       function findScript(startDir: string) {
         let dir = startDir;
         const root = path.parse(dir).root;
         while (dir && dir !== root) {
-          const candidate = path.join(dir, 'scripts', 'scrape-puppeteer.js');
+          const candidate = path.join(dir, "scripts", "scrape-puppeteer.js");
           if (fs.existsSync(candidate)) return candidate;
           dir = path.dirname(dir);
         }
@@ -167,55 +171,104 @@ export async function fetchSourceReviews(sourceUrl: string) {
       }
 
       const script =
-        findScript(__dirname) || findScript(process.cwd()) ||
-        path.join(process.cwd(), 'scripts', 'scrape-puppeteer.js');
-      console.debug('fetchSourceReviews: scraper script path', script, 'exists?', fs.existsSync(script));
-      const proc = spawnSync(process.execPath, [script, reviewUrl], { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
-      console.debug('fetchSourceReviews: spawn result status', proc.status, 'error', !!proc.error);
-      if (proc.stdout) console.debug('fetchSourceReviews: stdout length', String(proc.stdout).length, 'snippet', String(proc.stdout).slice(0,200));
-      if (proc.stderr) console.debug('fetchSourceReviews: stderr length', String(proc.stderr).length, 'snippet', String(proc.stderr).slice(0,200));
+        findScript(__dirname) ||
+        findScript(process.cwd()) ||
+        path.join(process.cwd(), "scripts", "scrape-puppeteer.js");
+      console.debug(
+        "fetchSourceReviews: scraper script path",
+        script,
+        "exists?",
+        fs.existsSync(script),
+      );
+      const proc = spawnSync(process.execPath, [script, reviewUrl], {
+        encoding: "utf8",
+        maxBuffer: 10 * 1024 * 1024,
+      });
+      console.debug(
+        "fetchSourceReviews: spawn result status",
+        proc.status,
+        "error",
+        !!proc.error,
+      );
+      if (proc.stdout)
+        console.debug(
+          "fetchSourceReviews: stdout length",
+          String(proc.stdout).length,
+          "snippet",
+          String(proc.stdout).slice(0, 200),
+        );
+      if (proc.stderr)
+        console.debug(
+          "fetchSourceReviews: stderr length",
+          String(proc.stderr).length,
+          "snippet",
+          String(proc.stderr).slice(0, 200),
+        );
       if (proc.error) throw proc.error;
       if (proc.status !== 0) {
-        console.error('fetchSourceReviews: puppeteer script failed', proc.stderr || proc.stdout);
+        console.error(
+          "fetchSourceReviews: puppeteer script failed",
+          proc.stderr || proc.stdout,
+        );
       } else {
-        const rendered = proc.stdout || '';
+        const rendered = proc.stdout || "";
         try {
-          const outDir = path.join(process.cwd(), 'tmp');
+          const outDir = path.join(process.cwd(), "tmp");
           if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-          fs.writeFileSync(path.join(outDir, 'rendered.html'), rendered, 'utf8');
-          console.debug('fetchSourceReviews: wrote rendered HTML to', path.join(outDir, 'rendered.html'));
+          fs.writeFileSync(
+            path.join(outDir, "rendered.html"),
+            rendered,
+            "utf8",
+          );
+          console.debug(
+            "fetchSourceReviews: wrote rendered HTML to",
+            path.join(outDir, "rendered.html"),
+          );
         } catch (e) {
           const failureMessage = e instanceof Error ? e.message : String(e);
-          console.debug('fetchSourceReviews: failed to write rendered HTML', failureMessage);
+          console.debug(
+            "fetchSourceReviews: failed to write rendered HTML",
+            failureMessage,
+          );
         }
-        const countMatches = (rendered.match(/data-hook="review"/g) || []).length;
-        console.debug('fetchSourceReviews: rendered contains data-hook="review" count', countMatches);
+        const countMatches = (rendered.match(/data-hook="review"/g) || [])
+          .length;
+        console.debug(
+          'fetchSourceReviews: rendered contains data-hook="review" count',
+          countMatches,
+        );
         const $$ = cheerio.load(rendered);
         const renderedReviews = $$('div[data-hook="review"]').toArray();
         for (const el of renderedReviews) {
           const root = $$(el);
           const externalId =
-            root.attr('id') || createHash('sha256').update(root.text()).digest('hex');
-          const author = root.find('.a-profile-name').first().text().trim() || null;
+            root.attr("id") ||
+            createHash("sha256").update(root.text()).digest("hex");
+          const author =
+            root.find(".a-profile-name").first().text().trim() || null;
           const ratingText =
             root.find('i[data-hook="review-star-rating"] span').text().trim() ||
-            root.find('span.a-icon-alt').text().trim() ||
-            root.find('.review-rating span').text().trim();
+            root.find("span.a-icon-alt").text().trim() ||
+            root.find(".review-rating span").text().trim();
           const ratingMatch = ratingText.match(/([0-5](?:\.[0-9])?)/);
           const rating = ratingMatch ? Number(ratingMatch[1]) : null;
           const title =
             root.find('h5[data-hook="reviewTitle"]').text().trim() ||
             root.find('[data-hook="reviewTitle"]').text().trim() ||
             root.find('a[data-hook="review-title"] span').text().trim() ||
-            root.find('.review-title-content span').text().trim() ||
+            root.find(".review-title-content span").text().trim() ||
             null;
           const body =
-            root.find('[data-hook="reviewRichContentContainer"]').text().trim() ||
+            root
+              .find('[data-hook="reviewRichContentContainer"]')
+              .text()
+              .trim() ||
             root.find('[data-hook="reviewText"]').text().trim() ||
             root.find('span[data-hook="review-body"] span').text().trim() ||
-            root.find('.review-text-content span').text().trim() ||
+            root.find(".review-text-content span").text().trim() ||
             null;
-          const dateRaw = root.find('span[data-hook="review-date"]').text().trim() || null;
+          const dateRaw =
+            root.find('span[data-hook="review-date"]').text().trim() || null;
           const date = dateRaw ? parseAmazonDate(dateRaw) : null;
           if (!externalId) continue;
           reviews.push({
@@ -230,12 +283,14 @@ export async function fetchSourceReviews(sourceUrl: string) {
         }
 
         if (reviews.length) {
-          console.debug(`fetchSourceReviews: puppeteer script extracted ${reviews.length} reviews`);
+          console.debug(
+            `fetchSourceReviews: puppeteer script extracted ${reviews.length} reviews`,
+          );
           return reviews;
         }
       }
     } catch (err) {
-      console.error('fetchSourceReviews: puppeteer script failed:', err);
+      console.error("fetchSourceReviews: puppeteer script failed:", err);
     }
   }
 
@@ -244,13 +299,17 @@ export async function fetchSourceReviews(sourceUrl: string) {
     const root = $(el);
     const title =
       root
-        .find("h3, h2, .review-title, [data-hook='reviewTitle'], h5[data-hook='reviewTitle']")
+        .find(
+          "h3, h2, .review-title, [data-hook='reviewTitle'], h5[data-hook='reviewTitle']",
+        )
         .first()
         .text()
         .trim() || null;
     const body =
       root
-        .find("[data-hook='reviewRichContentContainer'], [data-hook='reviewText'], p, .review-body, .review-text")
+        .find(
+          "[data-hook='reviewRichContentContainer'], [data-hook='reviewText'], p, .review-body, .review-text",
+        )
         .first()
         .text()
         .trim() || null;
@@ -261,7 +320,9 @@ export async function fetchSourceReviews(sourceUrl: string) {
         .text()
         .trim() || null;
     const ratingText = root
-      .find(".rating, .stars, .review-rating, [data-hook='review-star-rating'], span.a-icon-alt")
+      .find(
+        ".rating, .stars, .review-rating, [data-hook='review-star-rating'], span.a-icon-alt",
+      )
       .first()
       .text()
       .trim();
@@ -308,7 +369,7 @@ export async function saveReviews(reviews: FetchedReview[]) {
   let inserted = 0;
 
   for (const review of reviews) {
-    console.debug('saveReviews: inserting review', {
+    console.debug("saveReviews: inserting review", {
       source: review.source,
       external_id: review.external_id,
       title: review.title,

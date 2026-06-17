@@ -1,13 +1,18 @@
-import { Pool, type QueryResultRow } from 'pg';
+import { Pool, type QueryResultRow } from "pg";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
-  throw new Error('DATABASE_URL is not defined. Set it in .env or environment variables.');
+  throw new Error(
+    "DATABASE_URL is not defined. Set it in .env or environment variables.",
+  );
 }
 
 const pool = new Pool({ connectionString });
 
-export async function query<T extends QueryResultRow = QueryResultRow>(text: string, params: unknown[] = []): Promise<{ rows: T[]; rowCount: number }> {
+export async function query<T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params: unknown[] = [],
+): Promise<{ rows: T[]; rowCount: number }> {
   const client = await pool.connect();
   try {
     const result = await client.query<T>(text, params);

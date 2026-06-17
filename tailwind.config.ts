@@ -1,20 +1,17 @@
-import type { Config } from 'tailwindcss';
+import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: ["./app/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       boxShadow: {
-        soft: '0 20px 60px rgba(15, 23, 42, 0.08)',
+        soft: "0 20px 60px rgba(15, 23, 42, 0.08)",
       },
       colors: {
-        surface: '#f8fafc',
-        primary: '#4338ca',
+        surface: "#f8fafc",
+        primary: "#4338ca",
         slate: {
-          950: '#020617',
+          950: "#020617",
         },
       },
     },

@@ -24,6 +24,7 @@ A small internal dashboard that stores and displays the latest product reviews f
 ### Embedded Postgres local dev (no Docker or native Postgres needed)
 
 If you do not have PostgreSQL installed on your system, use the embedded local database flow:
+
 ```bash
 npm run dev:local
 ```
@@ -35,6 +36,7 @@ This command starts a temporary embedded Postgres instance, creates `review_db`,
 If you want to use Supabase instead of local Postgres, set `DATABASE_URL` to your Supabase connection string in `.env`. If your Supabase URL requires SSL, append `?sslmode=require`.
 
 Example:
+
 ```env
 DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require
 REVIEW_SOURCES=https://amzn.in/d/07vKnqI2,https://amzn.in/d/01qnlA6F,https://amzn.in/d/03eooMZA
@@ -42,6 +44,7 @@ PORT=3000
 ```
 
 Then run:
+
 ```bash
 npm run migrate
 npm run dev

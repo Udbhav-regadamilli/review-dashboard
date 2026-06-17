@@ -1,8 +1,8 @@
-require('dotenv').config();
-const { Pool } = require('pg');
+require("dotenv").config();
+const { Pool } = require("pg");
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
-  console.error('DATABASE_URL is required to run migrations.');
+  console.error("DATABASE_URL is required to run migrations.");
   process.exit(1);
 }
 
@@ -22,12 +22,12 @@ async function main() {
     UNIQUE(source, external_id)
   );`;
   await pool.query(sql);
-  console.log('Migration complete.');
+  console.log("Migration complete.");
 }
 
 main()
   .catch((error) => {
-    console.error('Migration failed:', error);
+    console.error("Migration failed:", error);
     process.exit(1);
   })
   .finally(() => pool.end());
